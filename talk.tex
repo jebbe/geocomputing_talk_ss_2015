@@ -7,50 +7,6 @@
 \usepackage{amsmath}
 \usepackage{esvect}
 %%
-\usepackage{tikz} 
-\usetikzlibrary{shapes,arrows}
-\tikzstyle{block} = [rectangle, draw, fill=green!20, 
-    text width=20em, text centered, rounded corners, minimum height=2em]
-\tikzstyle{line} = [draw,thick, -latex']
-%%
-\newcommand{\laplace}{\triangle}
-\renewcommand{\vec}[1]{\underline{#1}}
-\newcommand{\grad}[1]{\nabla#1}
-\renewcommand{\div}[1]{\nabla\cdot#1}
-\newcommand{\dt}{\partial_t}
-\newcommand{\dx}{\partial_x}
-\newcommand{\rf}{{\mbox{\tiny{ref}}}}
-\newcommand{\dev}{{\mbox{\tiny{dev}}}}
-\newcommand{\tot}{{\mbox{\tiny{tot}}}}
-\newcommand{\pot}{{\mbox{\tiny{pot}}}}
-\renewcommand{\vert}{{\mbox{\tiny{vert}}}}
-\newcommand{\mx}{{\mbox{\tiny{max}}}}
-\newcommand{\mn}{{\mbox{\tiny{min}}}}
-\newcommand{\op}[1]{\mathbf{#1}}
-\newcommand{\tensor}[1]{\mathbf{#1}}
-\newcommand{\oprA}{\mathbf{A}}
-\newcommand{\nicefrac}[2]{\frac{#1}{#2}}
-\newcommand{\backupbegin}{
-   \newcounter{framenumberappendix}
-   \setcounter{framenumberappendix}{\value{framenumber}}
-}
-\newcommand{\backupend}{
-   \addtocounter{framenumberappendix}{-\value{framenumber}}
-   \addtocounter{framenumber}{\value{framenumberappendix}}
-}
-%%
-\newcommand\tikzmark[1]{%
-  \tikz[remember picture,overlay]\coordinate (#1) {};}
-\newenvironment{cross}{%
-\noindent\tikzmark{lbegin}\hfill \tikzmark{rbegin}
-}{%
-\par\noindent\tikzmark{lend}\hfill \tikzmark{rend}
-\begin{tikzpicture}[overlay, remember picture]
-    \draw[red,thick] (lbegin) -- (rend);
-    \draw[red,thick] (rbegin) -- (lend);    
-\end{tikzpicture}\par
-}
-%%
 \input{commands.tex}
 %%
 \title[Stencil Interpolation]{Stencil Interpolation for Projected Coordinates}
