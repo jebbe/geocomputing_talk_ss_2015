@@ -7,6 +7,41 @@
 \usepackage{amsmath}
 \usepackage{esvect}
 %%
+\usepackage{tikz} 
+\usetikzlibrary{shapes,arrows}
+\tikzstyle{block} = [rectangle, draw, fill=green!20, 
+    text width=20em, text centered, rounded corners, minimum height=2em]
+\tikzstyle{line} = [draw,thick, -latex']
+%%
+\newcommand\tikzmark[1]{%
+  \tikz[remember picture,overlay]\coordinate (#1) {};}
+\newenvironment{cross}{%
+\noindent\tikzmark{lbegin}\hfill \tikzmark{rbegin}
+}{%
+\par\noindent\tikzmark{lend}\hfill \tikzmark{rend}
+\begin{tikzpicture}[overlay, remember picture]
+    \draw[red,thick] (lbegin) -- (rend);
+    \draw[red,thick] (rbegin) -- (lend);    
+\end{tikzpicture}\par
+}
+%%
+\newcommand{\laplace}{\triangle}
+\renewcommand{\vec}[1]{\underline{#1}}
+\newcommand{\dt}{\partial_t}
+\newcommand{\dx}{\partial_x}
+\newcommand{\rf}{{\mbox{\tiny{ref}}}}
+\newcommand{\dev}{{\mbox{\tiny{dev}}}}
+\newcommand{\tot}{{\mbox{\tiny{tot}}}}
+\newcommand{\pot}{{\mbox{\tiny{pot}}}}
+\renewcommand{\vert}{{\mbox{\tiny{vert}}}}
+\newcommand{\mx}{{\mbox{\tiny{max}}}}
+\newcommand{\mn}{{\mbox{\tiny{min}}}}
+\newcommand{\op}[1]{\mathbf{#1}}
+\newcommand{\tensor}[1]{\mathbf{#1}}
+\newcommand{\oprA}{\mathbf{A}}
+\newcommand{\nicefrac}[2]{\frac{#1}{#2}}
+
+%%
 \input{commands.tex}
 %%
 \title[Stencil Interpolation]{Stencil Interpolation for Projected Coordinates}
@@ -43,22 +78,359 @@
 \section{Motivation}
 \subsection{Motivation}
 %
-\begin{frame}\frametitle{Motivation}
-%
-todo ...
-%
+%%
+\begin{frame}\frametitle{Mantle Convection}
+\begin{columns}
+\column[T]{0.42\textwidth}
+\vspace{6mm}
+\begin{myColorBox}{.95}{}\color{linkcolor}
+\centering
+\begin{itemize}
+ \item Driving force behind plate tectonics
+ \item Regulates the long term thermal evolution of the Earth
+ \item Controls heat loss of the core
+% \item boundary conditions require global models
+\end{itemize}
+\end{myColorBox}
+\column[T]{0.58\textwidth}
+\hspace{6mm}\includegraphics[width=0.8\textwidth]{earths-mantel.png}\\
+\vspace{5mm}\hspace{47mm}\tiny{Image: mail.colonial.net}
+\end{columns}
 \end{frame}
+%%
+\begin{frame}\frametitle{Mantle Convection}
+\begin{columns}
+\hspace*{-8mm}
+\column[T]{0.45\textwidth}
+\vspace{6mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\centering
+\begin{itemize}
+ \item Global models became available in the late 80s
+ \item They were parallelized in the 90s
+\end{itemize}
+\end{myColorBox}
+\column[T]{0.55\textwidth}
+\vspace{-5mm}
+\begin{columns}
+\column[T]{0.5\textwidth}
+Glatzmeier, 1988\\
+\includegraphics[width=0.9\textwidth]{glatzmeier88.png}\\
+\vspace{2mm}
+\hspace*{-4mm}\includegraphics[width=1.1\textwidth]{bunge.png}\\
+Bunge and Baumgardner, 1995
+\column[T]{0.5\textwidth}
+Baumgardner, 1985\\
+\includegraphics[width=0.9\textwidth]{baumgardner85.png}\\
+\vspace{2mm}
+\includegraphics[width=0.9\textwidth]{tackley93.png}\\
+Tackley et al, 1993
+\end{columns}
+\end{columns}
+\end{frame}%%
+\begin{frame}
+\begin{columns}
+\column[T]{0.55\textwidth}
+\vspace{-6mm}
+\begin{myColorBox}{.95}{}\color{linkcolor}
+%\vspace*{-5mm}
+\centering
+%\hspace{-0mm}Thi (among others):
+\begin{itemize}
+ \item Convective planform (Earth and other planets)
+ \item Link to seismology
+ \item Geodetic observations
+ \item Mineralogy
+ \item Rheological effects
+ \item Thermal evolution
+ \item . . .
+\end{itemize}
+\end{myColorBox}
+\vspace{-3mm}
+\includegraphics[width=1\textwidth]{tackley_12.png}\\ \scriptsize{Tackley, 2012}
+\column[T]{0.45\textwidth}
+\vspace{-4mm}
+\scriptsize{Zhong et al, 2007}\\
+\includegraphics[width=0.65\textwidth]{zhong_07.png}\\
+\vspace{-6mm}
+\flushright\includegraphics[width=0.65\textwidth]{MantlePicTerra.png}\\
+\scriptsize{Schuberth et al, 2009}\\
+\end{columns}
+\end{frame}
+%%
+\begin{frame}\frametitle{Towards extreme resolutions}
+\begin{columns}
+\column[T]{0.55\textwidth}
+\vspace*{5mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+\centering
+\begin{itemize}
+ \item Most common codes scale to $\sim 1,000$ processors
+ \item New class of problems:
+ \begin{itemize}
+  \item Fluid dynamic inverse models
+  \item Complex non-linear problems
+ \end{itemize}
+ \item Current supercomputers have $\sim 1,000,000$ cores
+\end{itemize}
+\end{myColorBox}
+\column[T]{0.45\textwidth}
+\centering\includegraphics[width=\textwidth]{earth-collage.png}\\
+\end{columns}
+\end{frame}
+%%
+\begin{frame}\frametitle{Future Exascale Challenges}
+\vspace*{-3mm}
+\centering
+\begin{myColorBox}{.7}{}\color{linkcolor}
+\begin{itemize}
+ \item Millions of processing units
+ \item Heterogeneous hardware:
+\begin{itemize}
+ \item many-core
+ \item accelerators
+ \item GPUs
+\end{itemize}
+ \item Resilience
+ \item . . .
+\end{itemize}
+\end{myColorBox}
+\begin{itemize}
+ \item Priority program by the German research funding agency
+ \item Funding 13 application science projects
+\end{itemize}
+%\vspace{8mm}
+\hspace{13mm}
+\includegraphics[height=0.13\textheight]{sppexa.png}
+\hspace{13mm}
+\includegraphics[height=0.17\textheight]{tn-logo-crop.pdf}
+\end{frame}
+%%
+\section{Equations}
+\subsection*{Equations}
+%%
+\begin{frame}\frametitle{Governing equations}
+\only<1>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace*{2ex}
+\begin{itemize}
+ \item Simplified Navier-Stokes equations
+ \item Slow deformation by creep
+\end{itemize}
+}
+%%
+\only<2>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\color{blue}\eta \Delta \vec{u}} - \grad p + {\color{blue}\mbox{Ra} T} &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace*{2ex}
+\begin{itemize}
+ \item Simplified Navier-Stokes equations
+ \item Slow deformation by creep
+ \item {\color{blue}Force balance between friction and buoyancy}
+\end{itemize}
+}
+%%
+\only<3>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\color{red}\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace*{2ex}
+\begin{itemize}
+ \item Simplified Navier-Stokes equations
+ \item Slow deformation by creep
+ \item Force balance between friction and buoyancy
+ \item {\color{red}Dominated by viscous term ${\eta \Delta \vec{u}}$ \,\,$\Rightarrow$\,\, Global models}
+\end{itemize}
+}
+%%
+\only<4>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. {\color{blue}\dt T} = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace*{2ex}
+\begin{itemize}
+ \item Simplified Navier-Stokes equations
+ \item Slow deformation by creep
+ \item Force balance between friction and buoyancy
+ \item Dominated by viscous term ${\eta \Delta \vec{u}}$ \,\,$\Rightarrow$\,\, Global models
+ \item {\color{blue}Time derivative only in heat equation}
+\end{itemize}
+}
+\end{frame}
+%%
+\begin{frame}\frametitle{Governing equations}
+\only<1>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace{3mm}
+\hspace{15mm}
+\begin{tikzpicture}[node distance = 12mm, auto]
+  \node [block] (a) {Start with initial $T$};
+  \node [block, below of=a] (b) {Solve Stokes equations for $\vec{u}$ and $p$};
+  \node [block, below of=b] (c) {Integrate heat equation for $T$ forward in time};
+  \path [line] (a) -- (b);
+  \path [line] (b) -- (c);
+  \path [line] (c) -- +(4.5,0) -- +(4.5,1.2) -- (b);
+\end{tikzpicture}
+}
+%%
+\only<2>{
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+\color{blue} \quad\quad{\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &\color{blue}= 0 \quad \\
+\color{blue} \div \vec{u} &\color{blue}= 0 \\
+\end{align}
+\color{blue}\right\} \,\, \mbox{\color{blue}Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+\vspace{3mm}
+\hspace{15mm}
+\begin{tikzpicture}[node distance = 12mm, auto]
+  \node [block] (a) {Start with initial $T$};
+  \node [block, below of=a] (b) {Solve Stokes equations for $\vec{u}$ and $p$};
+  \node [block, below of=b] (c) {Integrate heat equation for $T$ forward in time};
+  \path [line] (a) -- (b);
+  \path [line] (b) -- (c);
+  \path [line] (c) -- +(4.5,0) -- +(4.5,1.2) -- (b);
+  \draw [blue,very thick] (0,-1.2) ellipse [ x radius=3.9, y radius=.6];
+\end{tikzpicture}
+}
+\end{frame}
+%%
+\begin{frame}\frametitle{Solving the Stokes equations}
+\vspace*{-3mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left.
+\begin{align}
+ \quad\quad{\eta \Delta \vec{u}} - \grad p + \mbox{Ra} T &= 0 \quad \\
+ \div \vec{u} &= 0 \\
+\end{align}
+\right\} \,\, \mbox{Stokes equations}  \,
+\end{equation*}
+\begin{equation*}
+\left. \dt T = - \vec{u} \cdot \grad{T} - \kappa\, \Delta T \quad\right \} \,\,\,\,\mbox{Heat equation}
+\end{equation*}\\
+\end{myColorBox}
+%\vspace*{1.4ex}
+\vspace*{-2mm}
+\begin{itemize}
+ \item So called saddle point problem:
+\end{itemize}
+\vspace*{-2mm}
+\begin{myColorBox}{.8}{}\color{linkcolor}
+\vspace*{-5mm}
+\centering
+\begin{equation*}
+\left( \begin{array}{cc}
+\mathbf{A} & \mathbf{B}^{\mbox{\tiny{T}}} \\
+\mathbf{B} & \mathbf{0} \\
+\end{array}\right)
+\left( \begin{array}{c}
+\mathbf{u} \\
+\mathbf{p} \\
+\end{array}\right) =
+\left( \begin{array}{c}
+\mathbf{f} \\
+\mathbf{0} \\
+\end{array}\right)
+\end{equation*}
+\end{myColorBox}
+\vspace*{-2mm}
+\begin{itemize}
+ \item Many different solution schemes
+ \item All need solution of Poisson equation
+ \item Multigrid
+\end{itemize}
+\end{frame}
+%%
 
 % =============================================================================
 %    Results for spherepoisson
 % =============================================================================
 %
-\section{Spherepoisson}
-\subsection{Spherepoisson}
-%
 % =============================================================================
 %
-\begin{frame}\frametitle{Model Description}
+\begin{frame}\frametitle{Model problem}
 We consider the PDE 
 \begin{align*}
 \div u &= f\quad \text{in }\Omega \\
@@ -77,7 +449,11 @@ f(x,y,z) = 3\cdot \sin(x)\sin(y)\sin(z).
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{Discritization}
+%
+\section{Discretization}
+\subsection{Discretization}
+%
+\begin{frame}\frametitle{Discretization}
 In the classical HHG approach the spherical shell is approximated
 by (at least 60) Tetrahedra (Macro-Tetrahedra).
 This input grid is split into primitives of different dimensions 
