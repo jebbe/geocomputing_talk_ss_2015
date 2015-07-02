@@ -452,41 +452,120 @@ f(x,y,z) = 3\cdot \sin(x)\sin(y)\sin(z).
 %
 \section{Discretization}
 \subsection{Discretization}
-%
-\begin{frame}\frametitle{Discretization}
-In the classical HHG approach the spherical shell is approximated
-by (at least 60) Tetrahedra (Macro-Tetrahedra).
-This input grid is split into primitives of different dimensions 
-(Vertices, Edges, Faces and \cempha{Tetrahedra})
 
-\begin{figure}\centering
-\includegraphics[width=0.5\textwidth]{macroTet_projected_constant_coords.png}
-\caption{Inner nodes of one Macro Tetrahedron for refinement level 5. 
-(Blue) classical (constant) coordinates in HHG 
-(Red) Projected coordinates
-}
-\end{figure}
-
-
-
+%%
+\begin{frame}\frametitle{Hierarchical Hybrid Grids}
+\begin{columns}
+\column[T]{0.5\textwidth}
+\vspace{-5mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+\centering
+\begin{itemize}
+ \item Discretizing a planet requires unstructured grid
+ \item More efficient solvers on structured grids
+\end{itemize}
+\end{myColorBox}
+\vspace{-3mm}
+\centering
+\includegraphics[width=0.32\textwidth]{icosaeder-0ref-crop.png}
+\includegraphics[width=0.32\textwidth]{icosaeder-1ref-crop.png}\\
+\includegraphics[width=0.32\textwidth]{icosaeder-2ref-crop.png}
+\includegraphics[width=0.32\textwidth]{icosaeder-3ref-crop.png}
+\column[T]{0.5\textwidth}
+\centering\includegraphics[height=0.4\textheight]{SemiStructuredGrid.png}\\
+\vspace{3mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+\centering
+\begin{itemize}
+ \item Unstructured input mesh
+ \item Regularly refined
+\end{itemize}
+\end{myColorBox}
+\end{columns}
 \end{frame}
+%%
+\begin{frame}\frametitle{Hierarchical Hybrid Grids}
+\begin{columns}
+\column[T]{0.5\textwidth}
+On input mesh:\\
+Geometric hierarchy of ...\\
+\vspace{1mm}
+\begin{itemize}
+ \item Volumes (tetrahedra)
+ \item Faces (triangles)
+ \item Edges
+ \item Nodes
+\end{itemize}
+\vspace{-5mm}
+\hspace{18mm}\reflectbox{\includegraphics[width=0.64\textwidth]{primitives2d.pdf}}\\
+\column[T]{0.5\textwidth}
+\vspace{-6mm}
+\centering\includegraphics[width=0.7\textwidth]{primitives.png}\\
+%\vspace{2mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+\centering
+Communication reduction by
+\begin{itemize}
+ \item Independent solution within geometric elements
+ \item Communication of ghost layers
+\end{itemize}
+\end{myColorBox}
+\end{columns}
+\end{frame}
+%%
+\begin{frame}\frametitle{Hierarchical Hybrid Grids}
+\textbf{Matrix free stencil code}
+\begin{columns}
+\column[T]{0.5\textwidth}
+\vspace*{-2mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+%\vspace*{-5mm}
+\centering
+\begin{itemize}
+ \item Fully stencil-based
+ \item Problem: Fine grid node within tetrehedra are not on the spherical shell
+ \item Current solution: \textit{on-the-fly} assembly of every stencil
+ \item Requires evaluation of the local stiffness matrix integrals over and over again
+\end{itemize}
+\end{myColorBox}
+\column[T]{0.5\textwidth}
+\vspace*{-12mm}
+\includegraphics[width=.95\textwidth]{stencil.png}\\
+\vspace*{3mm}
+\includegraphics[width=0.8\textwidth]{macroTet_projected_constant_coords.png}
+\end{columns}
+\end{frame}
+%
+% \begin{frame}\frametitle{Discretization}
+% In the classical HHG approach the spherical shell is approximated
+% by (at least 60) Tetrahedra (Macro-Tetrahedra).
+% This input grid is split into primitives of different dimensions 
+% (Vertices, Edges, Faces and \cempha{Tetrahedra})
+% \begin{figure}\centering
+% \includegraphics[width=0.5\textwidth]{macroTet_projected_constant_coords.png}
+% \caption{Inner nodes of one Macro Tetrahedron for refinement level 5. 
+% (Blue) classical (constant) coordinates in HHG 
+% (Red) Projected coordinates
+% }
+% \end{figure}
+% \end{frame}
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{Major Problem with projected coordinates}
-By projecting the coordinates onto the sphere, the fine grid tetrahedra
-do not have the same volume any more, i.e we lose one of HHGs major advantages
-(use the same local stiffness matrix for all refined nodes within one 
-macro element)
-
-As a consequence, we have to explicitly compute the local stiffness matrices
-for each fine grid node on-the-fly, which 
-   
-   das gefaellt mir noch gar nicht !!
-
-
-
-\end{frame}
+% \begin{frame}\frametitle{Major Problem with projected coordinates}
+% By projecting the coordinates onto the sphere, the fine grid tetrahedra
+% do not have the same volume any more, i.e we lose one of HHGs major advantages
+% (use the same local stiffness matrix for all refined nodes within one 
+% macro element)
+% 
+% As a consequence, we have to explicitly compute the local stiffness matrices
+% for each fine grid node on-the-fly, which 
+%    
+%    das gefaellt mir noch gar nicht !!
+% 
+% 
+% 
+% \end{frame}
 %
 % =============================================================================
 %
@@ -511,17 +590,16 @@ for each fine grid node on-the-fly, which
 \end{columns}
 \vspace{0.5cm}
 \centering
-Constant (blue) and projecte% =============================================================================
+Constant (blue) and projected (red) stencil entries for all nodes of one plane
+within one macro tetrahedron at refinement level 5
+\end{frame}
+
+% =============================================================================
 %    Results for spherepoisson
 % =============================================================================
 %
-\section{Spherepoisson}
-\subsection{Spherepoisson}d (red) stencil entries for all nodes of one plane
-within one macro tetrahedron at refinement level 5
-
-
-\end{frame}
-
+\section{Interpolation}
+\subsection{Interpolation}
 %
 % =============================================================================
 %
@@ -609,11 +687,25 @@ MW for different slices/planes within the macro tetrahedron
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{Interpolation of local stiffness matrices}
 
-
-todo ...
-
+%%
+\begin{frame}\frametitle{Variable viscosity}
+\begin{columns}
+\column[T]{0.5\textwidth}
+\vspace*{-2mm}
+\begin{myColorBox}{.9}{}\color{linkcolor}
+%\vspace*{-5mm}
+\centering
+\begin{itemize}
+ \item For variable viscosity, we assemble the stencil from the local stiffness matrices and the viscosity on-the-fly
+ \item We cannot interpolate the stencil because of varying viscosity
+ \item Interpolate local stiffness matrices instead, then do the on-the-fly assembly
+\end{itemize}
+\end{myColorBox}
+\column[T]{0.5\textwidth}
+%\vspace*{-12mm}
+\includegraphics[width=.95\textwidth]{stencil.png}\\
+\end{columns}
 \end{frame}
 
 %
@@ -623,7 +715,7 @@ todo ...
 
 
 \begin{theorem}
-Both approaches are equivalent.
+Interpolation of the stencils and of the local stiffness matrices is equivalent.
 \end{theorem}
 
 \begin{proof}
@@ -643,7 +735,12 @@ can be reversed.
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - residual norm}
+
+\section{Poisson}
+\subsection{Poisson}
+
+
+\begin{frame}\frametitle{Poisson: HHG results - residual norm}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -671,7 +768,7 @@ stencil (green) and interpolated local stiffness matrices (magenta)
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - CPU time}
+\begin{frame}\frametitle{Poisson: HHG results - CPU time}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -700,7 +797,7 @@ Jobs were done on borgcube with 32 procs.
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - Discretization error}
+\begin{frame}\frametitle{Poisson: HHG results - Discretization error}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -729,7 +826,7 @@ Jobs were done on borgcube with 32 procs.
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - Discretization error}
+\begin{frame}\frametitle{Poisson: HHG results - Discretization error}
 
 \begin{columns}[T] 
 \begin{column}[T]{5.8cm} 
@@ -753,12 +850,12 @@ Jobs were done on borgcube with 32 procs.
 %    Results for spherestokes
 % =============================================================================
 %
-\section{Spherestokes}
-\subsection{Spherestokes}
+\section{Stokes}
+\subsection{Stokes}
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - residual norm}
+\begin{frame}\frametitle{Stokes: HHG results - residual norm}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -786,7 +883,7 @@ stencil (green) and interpolated local stiffness matrices (magenta)
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - CPU time}
+\begin{frame}\frametitle{Stokes: HHG results - CPU time}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -815,7 +912,7 @@ Jobs were done on borgcube with 32 procs.
 %
 % =============================================================================
 %
-\begin{frame}\frametitle{HHG results - Discretization error}
+\begin{frame}\frametitle{Stokes: HHG results - Discretization error}
 
 \begin{columns}[T] 
 \begin{column}[T]{4.3cm} 
@@ -845,12 +942,18 @@ Jobs were done on borgcube with 32 procs.
 %    Outlook
 % =============================================================================
 %
-\section{Outlook}
-\subsection{Outlook}
+\section{Consclusions}
+\subsection{Conclusions}
 %
-\begin{frame}\frametitle{Outlook}
+\begin{frame}\frametitle{Conclusions}
 %
-todo...
+\begin{itemize}
+ \item Block-hybrid discretization of the sphere in a strict sense is geometrically impossible
+ \item Projection of stencils onto the sphere within the volumes is computationally expensive
+ \item Interpolation of the stencils increases the performance at the cost of slightly increased errors
+ \item Thorough error analysis and performance optimization required
+\end{itemize}
+
 %
 \end{frame}
 %
