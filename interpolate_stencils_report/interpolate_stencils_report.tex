@@ -432,16 +432,19 @@ Number of operations for a single lattice update for a scalar operator:\\
 
 Fenics reports 53 operations for the calculation of a Laplacian element matrix, so disregarding the divisions we would get:\\
 %
-\begin{tabular}{c|c|c|c}
- \textbf{Coords} & \textbf{Coeffs} & \textbf{Interp} & \textbf{Adds/Mults} \\
+\begin{tabular}{c|c|c|c|c|c|c}
+ \textbf{Coords} & \textbf{Coeffs} & \textbf{Interp} & \textbf{Adds/Mults} & \textbf{maxlvl=4} & \textbf{maxlvl=5} & \textbf{maxlvl=6} \\
  \hline
- constant  & constant & no  & 29   \\
- constant  & variable & no  & 226  \\
- projected & constant & no  & 1482 \\
- projected & variable & no  & 1514 \\
- projected & constant & yes & 320  \\
- projected & variable & yes & 1795 \\
+ constant  & constant & no  & 29   & 0.046 & 0.16 & 0.77 \\
+ constant  & variable & no  & 226  & 0.16  & 0.69 & 4.6  \\
+ projected & constant & no  & 1482 & 0.96  & 8.1  & 71   \\
+ projected & variable & no  & 1514 & 0.98  & 8.3  & 72   \\
+ projected & constant & yes & 320  & 0.29  & 0.95 & 6.0  \\
+ projected & variable & yes & 1795 & 0.76  & 5.5  & 46   \\
 \end{tabular}\\
+Also shown are runtimes for a regularly refined icosahedron (ntan=2, nrad=2) for different fine grid resolutions (serial, on borgcube, in seconds).
+
+Calculating the local element matrices involves function calls, which could be slow.\\
 
 \end{section}
 
