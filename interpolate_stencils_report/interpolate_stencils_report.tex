@@ -1,0 +1,415 @@
+\documentclass[a4paper,11pt,reqno]{amsart}
+
+%%%%%%%%%%%%%%%%%%%%%% define packages and commands %%%%%%%%%%%%%%%%%%%%
+%\usepackage[showrefs,showcites]{refcheck}
+\usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage[center]{subfigure}
+\usepackage{color}
+\usepackage{amsmath,amssymb,stmaryrd,amsthm,a4wide}
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\usepackage{ifthen,thumbpdf}
+
+
+\numberwithin{figure}{subsection}
+
+\def\si{SE_{value}^i}
+\def\RR{\mathbb{R}}
+\def\P{\mathcal{P}}
+
+\newtheorem{theorem}{Theorem}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% define title %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Interpolation of FEM stencils in HHG for projected coordinates}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+In this report, we investigate the influence of projected coordinates on
+the shape of the FEM stencils in HHG. To this end, we print and visualize 
+the stencils of all inner points within on macro tetrahedron for constant
+and projected coordinates. Since the displacements of the projected stencils
+exhibt a smooth shape, we further employ a quadratic interpolation of
+these stencils instead of the costly computation via local stiffness matrices.
+Further investigations are made in order to show if this approach is feasible.
+Finally we extend this approach also to variable coefficients.
+\end{abstract}\medskip
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Stencils for constant and projected coordinates                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{section}{Stencils for constant and projected coordinates}
+
+We start our investigation with the scalar poisson operator on a spherical
+shell with constant coefficients. 
+The input grid for HHG consists of $N$ macro tetrahedra. Each of these
+macro elements is refined $l$ times, i.e. there are $n_T$ inner fine grid nodes
+within one tetrahedron.
+\begin{equation}
+n_T = \left(2^l - 3\right)\cdot\left(2^l - 2\right)\cdot\left(2^l - 1\right)/6
+\end{equation}
+Here we choose $l=5$, i.e. we get 4495 inner nodes.
+
+Since we are using tetrahedral elements with linear FE spaces, the stencil
+for each inner node consists of 15 entries,  denoted by
+\emph{ME, MNW, MN, TS, TSE, TW, TC, BC, BE, BNW, BN, MS, MSE, MW, MC}.
+We will refer to corresponding stencil values of this ensemble as 
+$\si$, where $i$ selects the desired
+entry, i.e, $1 \leq i \leq 15$.
+
+We modify the HHG implementation to print the coordinates and all stencil entries
+for all nodes of exatly one macro tetrahedron. W.l.o.g. we choose the tetrahedral
+element with ID=0.
+
+In Fig.~\ref{fig:tet0Nodes} all interior nodes for constant and projected coordinates
+are shown.
+
+\begin{figure}\centering
+\includegraphics[width=0.7\textwidth]{pics/tetInnerNodes} 
+\caption{All interior nodes of one macro tetrahedron at refinement level 5.
+Blue points are for constant and the red for projected coordinates.}
+\label{fig:tet0Nodes}
+\end{figure}   
+
+Since we are only interest in stencils within macro tetrahedra, and not in macro faces,
+edges and vertices, we will now change our point of view and refer to these interior points
+as \emph{tetrahedron}, where the four outermost nodes form its \emph{corners}. 
+And all nodes lying on a straight between two corner nodes are denoted as \emph{edge}.
+
+
+Now we will have a closer look on the stencils for this tetrahedron. As it is difficult 
+to visualize 15-dimensional values in the 3-dimensional space, the tetrahedron is
+cut into slices $S_k$, $k = 1,...,n_E$, corresponding to planes formed by the nodes
+with constant coordinates.
+$n_E$ is the number of nodes along one edge, with
+\begin{equation}
+n_E = 2^l-3.
+\end{equation}
+And in slice $S_k$, there are
+\begin{equation}
+n_{S_k} = k(k+1)/2
+\end{equation}
+points.
+
+We reduce the 3-dimensional space to 2D by the simple projection $(x,y,z) \mapsto (x,y)$.
+Note, that for each slice $S_k$ this is an bijective mapping, as 
+$z = z(x,y)\enspace\forall(x,y,z)\in S_k$ and as long as $S_k$ is not orhtogonal to the
+z-axis. Now, the stencils can be visualized by using
+the mapped spatial coordinates and plotting $\si$ in z-direction. 
+In Fig.~\ref{fig:stencilCCvsVC} some $\si$ are illustrated for $S_{n_E}$. This is a
+random selection as all of the $\si$ exhibit a similiar shape. This also holds for other
+$S_k$.
+Naturally, as we consider here only constant coefficients, the particular stencil values 
+for constant coordinates are equal for all nodes of the tetrahedron. Whereas for projected
+coordinates we can observe some displacement. However, these displacements seem to
+be a smooth function with some curvature in it. This motivates the assumption, that each
+$\si$ can be fitted by a polynomial model. Due to the curvature, a linear fit is likely 
+to be inaccurate, but quadratic polynomial may due it. So in the following we will 
+investigate this approach.
+Going to higher degrees may give additional accuracy, but will also increase the 
+implentation complexity and computational costs. Therefore we will stick to the 
+quadratic approach.
+
+
+\begin{figure}\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilMC_nE} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilBC_nE} \\
+(a) MC & (b) BC  \\
+
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilMN_nE} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilMSE_nE} \\
+(c) MN & (d) MSE  \\
+
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilMW_nE} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilTSE_nE} \\
+ (e) MW  & (f) TSE  \\
+ 
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilBNW_nE} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilTS_nE} \\
+ (g) BNW  & (h) TS  
+\end{tabular}
+\caption{Eight out 15 stencil values for constant (blue) and projected
+coordinates (red) for slice $S_{n_E}$.
+\label{fig:stencilCCvsVC}}
+\end{figure}  
+
+\end{section}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Stencils for constant and projected coordinates                       %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{section}{Interpolation of stencils}
+For quadratic interpolation within on tetrahedron we choose the ansatz function
+\begin{equation}
+\label{eq:quadraticPolynomial}
+a_{200}x^2 + a_{020}y^2 + a_{002}z^2 + a_{110}xy + a_{101}xz + a_{011}yz + 
+a_{100}x + a_{010}y + a_{001}z + a_{000}
+\end{equation}
+Therefore we have to compute 10 coefficients $a_{(\cdot\cdot\cdot)}$, that is we
+have to choose 10 sample points. Naturally, we choose the four corner nodes plus the six
+edge midnodes, see Fig.~\ref{fig:samplePoints}
+
+\begin{figure}\centering
+\includegraphics[width=0.7\textwidth]{pics/tetSamplePoints} 
+\caption{Ten sample points (red) for quadratic interpolation of stencil values for 
+all interior nodes (blue) within on macro tetrahedron (black). For visualization,
+the constant coordinates have been used, but for the interpolation the projected
+will be utilised.}
+\label{fig:samplePoints}
+\end{figure}  
+
+
+\begin{subsection}{HHG Implementation}
+In HHG this approach is realised by defining two new kernels 
+\emph{tet\_gs\_coordsInterpolate.cc}
+and \emph{tet\_residual\_coordsInterpolate.cc} based on \emph{tet\_gs\_coords.cc} and 
+\emph{tet\_gs\_coords.cc}. As the stencil setup for gs and residual is the same, 
+the modifications are identic in both files.
+
+First, all $\si$ are computed for the ten sample points like in the original kernel. 
+Additionaly the (projected) x,y,z coordinates are used to build the $10\times10$ 
+matrix $A$, with 
+$A_{j,:} = \left[x_j^2\quad y_j^2\quad z_j^2\quad x_jy_j\quad x_jz_j\quad y_jz_j\quad
+x_j\quad y_j\quad z_j\quad 1\right]$, $j = 1,...,10$.
+Furthermore, the ten sample stencils are stored in a $10\times15$ matrix B,
+with $B_{j,i} = \left(\si\right)_j$, $i = 1,...,15$, $j=1,...,10$. 
+As this approach is intended to work 
+also for tensor valued operators, e.g. full tensor, this scheme is repeated for each
+operator entry, i.e, we have $A[op]$ and $B[op]$.
+
+Note, that for each stencil entry we need one interpolation polynomial, i.e. we
+have to compute $15\cdot10$ coefficients $a_{(\cdot\cdot\cdot)}^i$. To get these
+coefficients one has to solve the linear system $Ax_i = B_{:,i}$,
+where $x_i$ represents the coefficient vector for stencil entry $i$.
+
+To this end, we include LAPACK for solving this linear system 15 times. 
+Note, that $A$ doesn't change, so in fact we have to do one LU-decomposition
+and perform 15 forward and backward substitutions.
+
+Technically $A[op]$ and $B[op]$ are linear arrays for passing them to LAPACK. 
+
+Once the coefficients have been computed, the interpolation of the stencils for
+all tetrahedra nodes is straight forward. For each node, get its (projected) coordinates
+and insert them into \eqref{eq:quadraticPolynomial}. One evaluation
+of this polynomial consists of 21 multiplications and 9 additions, so in total 
+\textbf{30 FLOPS}. This has to be done 15 times. 
+
+For consistency, the center stencil
+entry MC is set to the negative sum of all other entries.
+
+\end{subsection}
+
+
+
+
+\begin{subsection}{Evaluation}
+
+
+TODO ...
+
+\begin{figure}\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilME_slice1} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilME_slice7} \\
+(a) ME slice $S_{29}$ & (b) ME slice $S_{23}$  \\
+
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilME_slice14} &
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilME_slice21} \\
+(c) ME slice $S_{16}$ & (d) ME slice $S_{9}$  \\
+
+\end{tabular}
+\caption{Interpolation (black circles) of stencil value ME (red for projected, and 
+blue for constant coordinates) for different slices.
+\label{fig:stencilInterpolateME}}
+\end{figure}  
+
+
+
+% \begin{figure}\centering
+% \begin{tabular}{@{}cc@{}}
+% \includegraphics[width=0.475\textwidth]%
+% {pics/res_poisson_level4} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/res_poisson_level5} \\
+% (a) max. level 3 & (b) max. level 4  \\
+% 
+% \includegraphics[width=0.475\textwidth]%
+% {pics/res_poisson_level6} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/res_poisson_level7} \\
+% (c) max. level 6 & (d) max. level 7  
+% 
+% \end{tabular}
+% \caption{Residual in L2-Norm for spherepoisson driver
+% for constant (blue) and projected (red) coordinates
+% and for interpolated (green) stencils for different
+% levels of maximal refinement.
+% \label{fig:res_poisson}}
+% \end{figure}  
+% 
+% 
+% \begin{figure}\centering
+% \begin{tabular}{@{}cc@{}}
+% \includegraphics[width=0.475\textwidth]%
+% {pics/time_poisson_level4} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/time_poisson_level5} \\
+% (a) max. level 3 & (b) max. level 4  \\
+% 
+% \includegraphics[width=0.475\textwidth]%
+% {pics/time_poisson_level6} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/time_poisson_level7} \\
+% (c) max. level 6 & (d) max. level 7  
+% 
+% \end{tabular}
+% \caption{CPU time for one iteration for spherepoisson driver
+% for constant (blue) and projected (red) coordinates
+% and for interpolated (green) stencils for different
+% levels of maximal refinement.
+% \label{fig:time_poisson}}
+% \end{figure}  
+% 
+% 
+% 
+% \begin{figure}\centering
+% \begin{tabular}{@{}cc@{}}
+% \includegraphics[width=0.475\textwidth]%
+% {pics/relAvgTime_poisson} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/factorIV_poisson} \\
+% (a) relative average CPU time & (b) relative improvement of interpolated \\
+% & stencils compared to stencil computation \\
+% & for projected coordinates
+% \end{tabular}
+% \label{fig:time_poisson}
+% \end{figure}  
+% 
+% 
+% 
+% 
+\end{subsection}
+
+
+\begin{subsection}{Open Points}
+
+
+\end{subsection}
+
+\end{section}
+
+
+\newpage
+\begin{section}{Interpolation of local stiffness matrices}
+
+Let $F_S : \RR^3 \rightarrow \RR^{15}$ be the representation of the 15pt stencil
+for point $(x,y,z)$. Then the interpolation of the particular stencil entries reads
+as
+\begin{equation}
+\label{eq:interpolationStencil}
+F_S(x,y,z) = 
+\begin{pmatrix}
+f^1(x,y,z) \\
+\vdots \\
+f^{15}(x,y,z)
+\end{pmatrix}
+\approx
+\begin{pmatrix}
+p^f_1(x,y,z) \\
+\vdots \\
+p^f_{15}(x,y,z)
+\end{pmatrix}
+=: P^f(x,y,z)
+\end{equation}
+Where $p^f_i$ are quadratic polynomials.
+On the other hand, $f^i$ is a sum over local element stiffness matrix entries 
+$e_j^i$ depending on $i$ ($i = 1,...,15$). 
+Therefore, the interpolation of the local stiffness matrices reads as
+
+\begin{equation}
+\label{eq:interpolationLocStiffness}
+F_S(x,y,z) = 
+\begin{pmatrix}
+\sum_{j=1}^{n_1}e_j^1(x,y,z) \\
+\vdots \\
+\sum_{j=1}^{n_{15}}e_j^{15}(x,y,z) 
+\end{pmatrix}
+\approx
+\begin{pmatrix}
+\sum_{j=1}^{n_1}p_{1,j}^e(x,y,z)  \\
+\vdots \\
+\sum_{j=1}^{n_{15}}p_{15,j}^e(x,y,z) 
+\end{pmatrix}
+=: P^e(x,y,z)
+\end{equation}
+with quadratic polynomials $p^e_{i,j}$.
+
+\begin{theorem}
+Both approaches are equivalent, i.e. $P^f = P^s$.
+\end{theorem}
+\begin{proof}
+Throughout this proof it holds $i = 1,...,15$.
+As $p^f_i$ and $p^e_{i,j}$ are quadratic polynomials, there exists 
+a functional $\P_i : \RR^{10} \rightarrow \Pi^2$ which maps a
+10-dimensional sample tuple linearly (and uniquely) 
+onto a quadratic polynomial.
+
+Let $f^i(x_k,y_k,z_k) =:f_k^i$ be the sample points
+for $p^f_i$ and $e^i_j(x_k,y_k,z_k) =:e_{j,k}^i$ for $p^e_{i,j}$
+with $k = 1,...,10$.
+Then, it is
+\begin{equation*}
+\P_i(f^i_1,...,f^i_{10}) = p_i^f \in \Pi^2
+\end{equation*}
+and
+\begin{equation*}
+\P_i(e^i_{j,1},...,e^i_{j,10}) = p_{i,j}^e \in \Pi^2.
+\end{equation*}
+Then it holds for each $i= 1,...,15$
+\begin{align*}
+\begin{split}
+P^e_i(x,y,z) &= \sum_{j=1}^{n_i} p^e_{i,j} 
+ = \sum_{j=1}^{n_i}\left[\P_i\left(e^i_{j,1},...,e^i_{j,10}\right)(x,y,z)\right] \\
+ &\stackrel{(1)}{=} \left[\sum_{j=1}^{n_i}\P_i\left(e^i_{j,1},...,e^i_{j,10}\right)\right](x,y,z) \\
+ &\stackrel{(2)}{=} \P_i\left(\sum_{j=1}^{n_i}\left(e^i_{j,1},...,e^i_{j,10}\right)\right)(x,y,z) \\
+ &\stackrel{(3)}{=} \P_i\left(\sum_{j=1}^{n_i}e^i_{j,1},...,\sum_{j=1}^{n_i}e^i_{j,10}\right)(x,y,z) \\
+ &= \P_i\left(f^i_1,...,f^i_{10}\right)(x,y,z) \\
+ &= p_i^f(x,y,z) = P_i^f(x,y,z).
+\end{split}
+\end{align*}
+(1) addtion of $\Pi^2$ elements\\
+(2) $\P_i$ is linear \\
+(3) basic vector addition\\
+And therefore, $P^f = P^s$.
+\end{proof}
+
+\end{section}
+
+
+
+
+
+% -----------------------------------------------------------------------------
+\end{document}
+% -----------------------------------------------------------------------------
