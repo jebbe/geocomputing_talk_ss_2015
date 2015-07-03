@@ -406,7 +406,44 @@ And therefore, $P^f = P^s$.
 
 \end{section}
 
+\clearpage
 
+\begin{section}{Operation counts}
+%
+Number of operations for a single lattice update for a scalar operator:\\
+%
+\begin{tabular}{c|c|c|c|c|c}
+ \textbf{Coords} & \textbf{Coeffs} & \textbf{Interp} & \textbf{elem-mat} & \textbf{Adds/Mults} & \textbf{Divs} \\
+ \hline
+ constant  & constant & no  & 0  & \textbf{29}$^1$                                    & 0     \\
+ constant  & variable & no  & 0  & 16$^2$ + 181$^3$ + 29$^1$ = \textbf{226}           & 1$^4$ \\
+ projected & constant & no  & 24 & 181$^3$ + 29$^1$ = \textbf{210}                    & 1$^4$ \\
+ projected & variable & no  & 24 & 32$^2$ + 181$^3$ + 29$^1$ = \textbf{242}           & 1$^4$ \\
+ projected & constant & yes & 0  & 6$^5$ + 285$^6$ + 29$^1$ = \textbf{320}            & 1$^4$ \\
+ projected & variable & yes & 0  & 6$^5$ + 32$^2$ + 1728$^6$ + 29$^1$ = \textbf{1795} & 1$^4$ \\
+\end{tabular}\\
+%
+1: Stencil application\\
+2: Averaging of viscosities\\
+3: Coefficients times local element matrices\\
+4: Calculation of central stencil entry\\
+5: Calculating the coordinate-part of the interpolation polynomial ($x^2$, $x \cdot y$, etc)\\
+6: Interpolation\\
+
+Fenics reports 53 operations for the calculation of a Laplacian element matrix, so disregarding the divisions we would get:\\
+%
+\begin{tabular}{c|c|c|c}
+ \textbf{Coords} & \textbf{Coeffs} & \textbf{Interp} & \textbf{Adds/Mults} \\
+ \hline
+ constant  & constant & no  & 29   \\
+ constant  & variable & no  & 226  \\
+ projected & constant & no  & 1482 \\
+ projected & variable & no  & 1514 \\
+ projected & constant & yes & 320  \\
+ projected & variable & yes & 1795 \\
+\end{tabular}\\
+
+\end{section}
 
 
 
