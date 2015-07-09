@@ -14,7 +14,7 @@
 \usepackage{ifthen,thumbpdf}
 
 
-\numberwithin{figure}{subsection}
+\numberwithin{figure}{section}
 
 \def\si{SE_{value}^i}
 \def\RR{\mathbb{R}}
@@ -36,7 +36,7 @@ the shape of the FEM stencils in HHG. To this end, we print and visualize
 the stencils of all inner points within on macro tetrahedron for constant
 and projected coordinates. Since the displacements of the projected stencils
 exhibt a smooth shape, we further employ a quadratic interpolation of
-these stencils instead of the costly computation via local stiffness matrices.
+these stencils instead of the costly computation via local element matrices.
 Further investigations are made in order to show if this approach is feasible.
 Finally we extend this approach also to variable coefficients.
 \end{abstract}\medskip
@@ -213,31 +213,25 @@ of this polynomial consists of 21 multiplications and 9 additions, so in total
 
 For consistency, the center stencil
 entry MC is set to the negative sum of all other entries.
+Note, that by the same argument as in theorem \ref{theorem:equivalence}
+this is already guaranteed by construction.
 
-\end{subsection}
-
-
-
-
-\begin{subsection}{Evaluation}
+In Fig.~\ref{fig:stencilInterpolateME} the interpolated stencil values are representative
+given for the ME stencil entry. Here we used an input mesh resolution with 1920 elements.
 
 
-TODO ...
-
-\begin{figure}\centering
+\begin{figure}[H]\centering
 \begin{tabular}{@{}cc@{}}
 \includegraphics[width=0.475\textwidth]%
 {pics/stencilME_slice1} &
 \includegraphics[width=0.475\textwidth]%
 {pics/stencilME_slice7} \\
 (a) ME slice $S_{29}$ & (b) ME slice $S_{23}$  \\
-
 \includegraphics[width=0.475\textwidth]%
 {pics/stencilME_slice14} &
 \includegraphics[width=0.475\textwidth]%
 {pics/stencilME_slice21} \\
 (c) ME slice $S_{16}$ & (d) ME slice $S_{9}$  \\
-
 \end{tabular}
 \caption{Interpolation (black circles) of stencil value ME (red for projected, and 
 blue for constant coordinates) for different slices.
@@ -245,84 +239,29 @@ blue for constant coordinates) for different slices.
 \end{figure}  
 
 
-
-% \begin{figure}\centering
-% \begin{tabular}{@{}cc@{}}
-% \includegraphics[width=0.475\textwidth]%
-% {pics/res_poisson_level4} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/res_poisson_level5} \\
-% (a) max. level 3 & (b) max. level 4  \\
-% 
-% \includegraphics[width=0.475\textwidth]%
-% {pics/res_poisson_level6} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/res_poisson_level7} \\
-% (c) max. level 6 & (d) max. level 7  
-% 
-% \end{tabular}
-% \caption{Residual in L2-Norm for spherepoisson driver
-% for constant (blue) and projected (red) coordinates
-% and for interpolated (green) stencils for different
-% levels of maximal refinement.
-% \label{fig:res_poisson}}
-% \end{figure}  
-% 
-% 
-% \begin{figure}\centering
-% \begin{tabular}{@{}cc@{}}
-% \includegraphics[width=0.475\textwidth]%
-% {pics/time_poisson_level4} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/time_poisson_level5} \\
-% (a) max. level 3 & (b) max. level 4  \\
-% 
-% \includegraphics[width=0.475\textwidth]%
-% {pics/time_poisson_level6} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/time_poisson_level7} \\
-% (c) max. level 6 & (d) max. level 7  
-% 
-% \end{tabular}
-% \caption{CPU time for one iteration for spherepoisson driver
-% for constant (blue) and projected (red) coordinates
-% and for interpolated (green) stencils for different
-% levels of maximal refinement.
-% \label{fig:time_poisson}}
-% \end{figure}  
-% 
-% 
-% 
-% \begin{figure}\centering
-% \begin{tabular}{@{}cc@{}}
-% \includegraphics[width=0.475\textwidth]%
-% {pics/relAvgTime_poisson} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/factorIV_poisson} \\
-% (a) relative average CPU time & (b) relative improvement of interpolated \\
-% & stencils compared to stencil computation \\
-% & for projected coordinates
-% \end{tabular}
-% \label{fig:time_poisson}
-% \end{figure}  
-% 
-% 
-% 
-% 
 \end{subsection}
 
-
-\begin{subsection}{Open Points}
-
-
-\end{subsection}
 
 \end{section}
 
 
-\newpage
-\begin{section}{Interpolation of local stiffness matrices}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Interpolation of local element matrices                               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\begin{section}{Interpolation of local element matrices}
+
+However, this approach cannot be utilised for variable coefficients, as non-smooth
+changes in the coefficients are not resolved by the interpolation. But there is a 
+workaround. Instead of interpolating the stencils, we can interpolate the local 
+element matrices and build the stencil by evaluating the interpolation polynomial
+instead of computing the element matrices. As there are 24 surrounding fine grid
+tetrahedra for each interior point, and for each of these there are 4 element matrix
+entries that contribute to the stencil, we need in total 96 polynomials.
+
+In following we will show, that for coefficients $c\equiv const$ (w.l.o.g. $const = 1$),
+both interpolation approaches are equivalent.
 Let $F_S : \RR^3 \rightarrow \RR^{15}$ be the representation of the 15pt stencil
 for point $(x,y,z)$. Then the interpolation of the particular stencil entries reads
 as
@@ -343,9 +282,9 @@ p^f_{15}(x,y,z)
 =: P^f(x,y,z)
 \end{equation}
 Where $p^f_i$ are quadratic polynomials.
-On the other hand, $f^i$ is a sum over local element stiffness matrix entries 
+On the other hand, $f^i$ is a sum over local element element matrix entries 
 $e_j^i$ depending on $i$ ($i = 1,...,15$). 
-Therefore, the interpolation of the local stiffness matrices reads as
+Therefore, the interpolation of the local element matrices reads as
 
 \begin{equation}
 \label{eq:interpolationLocStiffness}
@@ -366,6 +305,7 @@ F_S(x,y,z) =
 with quadratic polynomials $p^e_{i,j}$.
 
 \begin{theorem}
+\label{theorem:equivalence}
 Both approaches are equivalent, i.e. $P^f = P^s$.
 \end{theorem}
 \begin{proof}
@@ -406,9 +346,18 @@ And therefore, $P^f = P^s$.
 
 \end{section}
 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Operation counts                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \clearpage
 
 \begin{section}{Operation counts}
+\label{sec:operationCounts}
 %
 Number of operations for a single lattice update for a scalar operator:\\
 %
@@ -448,6 +397,120 @@ Calculating the local element matrices involves function calls, which could be s
 
 \end{section}
 
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Spherepoisson test                                                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{section}{Spherepoisson test}
+
+
+
+For evaluation of these new approaches, let us begin with the spherepoisson driver, 
+and an initial input grid with 
+540 macro tetrahedra (i.e ntan=4, nrad=2). We run the testproblem for several
+maximal refinement levels (starting with 3 and going up to level 7) in parallel
+with 32 processors. In Fig.~\ref{fig:spherepoissonRES_3}-\ref{fig:spherepoissonERR_3}
+the residual, CPU time and discretisation error, respectively, are shown.
+In Fig.~\ref{fig:spherepoissonRES_3} we can observe a very good match for
+projected coordinates and the interpolation
+approaches (as there is no red line visible).
+And according to our theoretical statement, both interpolation approaches are
+equivalent. But the difference gets obvious when we have a look at the CPU time,
+cf. Fig.~\ref{fig:spherepoissonCPU_3}. The runtime for stencil interpolation
+gets pretty close to the constant case, whereas for interpolated element matrices
+there is only some moderate speed up compared to projected coordinates.
+This behaviour represents also the theoretical operation counts in section 
+\ref{sec:operationCounts}.
+For the discretisation error, we expect a reduction
+of factor 4 for each refinement. This holds for the constant and for the projected
+coordinates cases, as can be seen in Fig.~\ref{fig:spherepoissonERR_3}. But for
+the interpolation this only holds for level 3,4 and 5, at level 6 and 7 it deteriorates.
+This can be seen more clearly in Fig.~\ref{fig:spherepoissonERR_compare}.
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_resEuc_level4.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_resEuc_level5.eps} \\
+(a) max. level 4 & (b) max. level 5  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_resEuc_level6.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_resEuc_level7.eps} \\
+(c) max. level 6 & (d) max. level 7  
+\end{tabular}
+\caption{Residual in L2-Norm for spherepoisson driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green) stencils and for interpolated
+element matrices (magenta)for different
+levels of maximal refinement.
+\label{fig:spherepoissonRES_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_cpuTime_level4.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_cpuTime_level5.eps} \\
+(a) max. level 4 & (b) max. level 5  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_cpuTime_level6.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_cpuTime_level7.eps} \\
+(c) max. level 6 & (d) max. level 7  
+\end{tabular}
+\caption{CPU time for spherepoisson driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green) stencils and for interpolated
+element matrices (magenta) for parallel runs with
+32 processors.
+\label{fig:spherepoissonCPU_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_errorEuc_level4.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_errorEuc_level5.eps} \\
+(a) max. level 4 & (b) max. level 5  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_errorEuc_level6.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherepoisson_errorEuc_level7.eps} \\
+(c) max. level 6 & (d) max. level 7  
+\end{tabular}
+\caption{Discretization error in L2-Norm for 
+spherepoisson driver
+\label{fig:spherepoissonERR_3}}
+\end{figure}  
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.4\textwidth]%
+{pics/spherepoisson_errorEuc_ProjCoords.eps} &
+\includegraphics[width=0.4\textwidth]%
+{pics/spherepoisson_errorEuc_InterpolationStencil.eps} 
+\end{tabular}
+\caption{Discretization error for projected coordinates (left)
+and interpolated stencils (right).
+\label{fig:spherepoissonERR_compare}}
+\end{figure}  
+
+\end{section}
 
 
 % -----------------------------------------------------------------------------
