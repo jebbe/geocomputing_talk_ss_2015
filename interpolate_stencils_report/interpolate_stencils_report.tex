@@ -572,7 +572,8 @@ the coefficients are not set correctly. Otherwise the results deteriorate.
 
 
 For the Stokes problem, we observe, in contrast to the Poisson case,
-a very good match between the projected coordinates and interpolation.
+a very good match between the projected coordinates and interpolation,
+cf. Fig.~\ref{fig:spherestokesRES_3} - \ref{fig:spherestokesERR_3}
 
 One possible explanation:
 As we do Schur complement CG, the inverse of $A$ is only 
@@ -586,6 +587,10 @@ interpolation. For the $B$ part we still have to explicitly compute the
 stencils. But Fig.~\ref{fig:spherestokesCPU_3} shows that this has only
 minor impact on the runtime.
 
+So maybe we do not need to be so accurate for the $A$ part. What happens
+if we use linear interpolation, which reduces the amount of work by
+factor of 3? See 
+Fig.~\ref{fig:spherestokesLinearRES_3} - \ref{fig:spherestokesLinearERR_3}.
 
 
 \begin{figure}[H]\centering
@@ -670,6 +675,92 @@ whereas for cyan and black also the $B$ part is interpolated.
 operator (top) and for grad operator (bottom)
 \label{fig:spherestokesERR_compare}}
 \end{figure}  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_linear_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_linear_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_linear_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_linear_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{Residual in L2-Norm for spherestokes driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green/cyan) stencils and for interpolated
+element matrices (magenta/black). For green/magenta
+curve, we do quadratic interpolation,
+and for cyan/black linear interpolation.
+\label{fig:spherestokesLinearRES_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_linear_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_linear_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_linear_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_linear_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{CPU time for spherestokes driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green/cyan) stencils and for interpolated
+element matrices (magenta/black) for parallel runs with
+32 processors.
+For green/magenta
+curve, we do quadratic interpolation,
+and for cyan/black linear interpolation.
+\label{fig:spherestokesLinearCPU_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_linear_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_linear_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_linear_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_linear_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{Discretisation error in L2-Norm for 
+spherestokes driver.
+For green/magenta
+curve, we do quadratic interpolation,
+and for cyan/black linear interpolation.
+\label{fig:spherestokesLinearERR_3}}
+\end{figure}  
+
+
+
+
 
 
 
