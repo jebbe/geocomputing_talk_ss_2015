@@ -21,6 +21,7 @@
 \def\P{\mathcal{P}}
 
 \newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% define title %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -251,6 +252,7 @@ blue for constant coordinates) for different slices.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \begin{section}{Interpolation of local element matrices}
+\label{sec:interpolationLocElementMat}
 
 However, this approach cannot be utilised for variable coefficients, as non-smooth
 changes in the coefficients are not resolved by the interpolation. But there is a 
@@ -432,6 +434,20 @@ coordinates cases, as can be seen in Fig.~\ref{fig:spherepoissonERR_3}. But for
 the interpolation this only holds for level 3,4 and 5, at level 6 and 7 it deteriorates.
 This can be seen more clearly in Fig.~\ref{fig:spherepoissonERR_compare}.
 
+For a better interpretation of these results, lets have a look at the stencil values itself.
+Therefore, we compute for each sample point the norm of the stencil as $\|F_S\|_2$ 
+(see section \ref{sec:interpolationLocElementMat}).
+In Fig.~\ref{fig:stencilNormPoisson} (a) these norms are plotted for all macro tetrahedra.
+As these are somewhat difficult to interpret, we additionally compute the mean value
+of these norms (b). 
+
+Assuming that all non-center stencil entries are approximately of the same order,
+i.e. they have value $v$, then the L2 norm reads as
+\begin{equation}
+\|F_S\|_2 \approx \sqrt{\sum_{i=1}^{14}v^2 + \left(\sum_{i=1}^{14}-v\right)^2}
+= \sqrt{210 v^2} \approx 15v
+\end{equation}
+
 
 
 \begin{figure}[H]\centering
@@ -510,7 +526,156 @@ and interpolated stencils (right).
 \label{fig:spherepoissonERR_compare}}
 \end{figure}  
 
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/stencilNormPoisson_ntan4.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/meanStencilValuePoisson_ntan4.eps} 
+\end{tabular}
+\caption{Stencil norms of 10 sample points for all 
+macro tetrahedra
+(incl. mean value as horizontal line)
+(left)
+and their mean values (right) on different levels.
+\label{fig:spherepoissonERR_compare}}
+\end{figure}  
+
+
+\begin{remark}
+For all element matrix interpolation runs, we had to use 
+\emph{useOpsForVarCoeffs=false}, manually set the coefficients to
+1 in the \emph{tet\_gs\_coeff\_coordsInterpolate.cc} and \\
+\emph{tet\_residual\_coeff\_coordsInterpolate.cc} kernels and finally substitute
+tet\_gs\_coordsInterpolate.cc/ tet\_residual\_coordsInterpolate by these two
+kernels.
+This was necessary (as we suppose) due to bug in the faces kernel where
+the coefficients are not set correctly. Otherwise the results deteriorate.
+\end{remark}
+
+
+
 \end{section}
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%               Spherestokes test                                                    %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{section}{Spherestokes test}
+
+
+For the Stokes problem, we observe, in contrast to the Poisson case,
+a very good match between the projected coordinates and interplation.
+
+One possible explanation:
+As we do Schur complement CG, the inverse of $A$ is only 
+approximated by a few V-cycles. So we do not enter the 
+critical zone where the discretisation error
+gets stagnant. Furthermore the outer CG iteration may 
+smear out/eliminate the error introduced by interpolation.
+
+Note, that this only holds, if only the $A$ part is approximated by
+interpolation. For the $B$ part we still have to explicitly compute the
+stencils. But Fig.~\ref{fig:spherestokesCPU_3} shows that this has only
+minor impact on the runtime.
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_intP_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_intP_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_intP_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_resEuc_intP_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{Residual in L2-Norm for spherestokes driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green/cyan) stencils and for interpolated
+element matrices (magenta/black). For green and magenta
+curve, only the $A$ part of the Stokes system is interpolated,
+whereas for cyan and black also the $B$ part is interpolated.
+\label{fig:spherestokesRES_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_intP_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_intP_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_intP_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_cpuTime_intP_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{CPU time for spherestokes driver
+for constant (blue) and projected (red) coordinates,
+for interpolated (green/cyan) stencils and for interpolated
+element matrices (magenta/black) for parallel runs with
+32 processors.
+For green and magenta
+curve, only the $A$ part of the Stokes system is interpolated,
+whereas for cyan and black also the $B$ part is interpolated.
+\label{fig:spherestokesCPU_3}}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_intP_level3.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_intP_level4.eps} \\
+(a) max. level 3 & (b) max. level 4  \\
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_intP_level5.eps} &
+\includegraphics[width=0.475\textwidth]%
+{pics/spherestokes_errorEuc_intP_level6.eps} \\
+(c) max. level 5 & (d) max. level 6  
+\end{tabular}
+\caption{Discretization error in L2-Norm for 
+spherestokes driver.
+For green and magenta
+curve, only the $A$ part of the Stokes system is interpolated,
+whereas for cyan and black also the $B$ part is interpolated.
+\label{fig:spherestokesERR_3}}
+\end{figure}  
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}c}
+\includegraphics[width=0.98\textwidth]%
+{pics/meanStencilValueFullTensor_ntan4.eps} \\
+\includegraphics[width=0.98\textwidth]%
+{pics/meanStencilValueGradP_ntan4.eps} 
+\end{tabular}
+\caption{Mean stencil values for the full 
+operator (top) and for grad operator (bottom)
+\label{fig:spherestokesERR_compare}}
+\end{figure}  
+
+
+
+\end{section}
+
+
 
 
 % -----------------------------------------------------------------------------
