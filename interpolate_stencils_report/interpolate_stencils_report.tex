@@ -36,7 +36,7 @@ In this report, we investigate the influence of projected coordinates on
 the shape of the FEM stencils in HHG. To this end, we print and visualize 
 the stencils of all inner points within on macro tetrahedron for constant
 and projected coordinates. Since the displacements of the projected stencils
-exhibt a smooth shape, we further employ a quadratic interpolation of
+exhibit a smooth shape, we further employ a quadratic interpolation of
 these stencils instead of the costly computation via local element matrices.
 Further investigations are made in order to show if this approach is feasible.
 Finally we extend this approach also to variable coefficients.
@@ -66,7 +66,7 @@ $\si$, where $i$ selects the desired
 entry, i.e, $1 \leq i \leq 15$.
 
 We modify the HHG implementation to print the coordinates and all stencil entries
-for all nodes of exatly one macro tetrahedron. W.l.o.g. we choose the tetrahedral
+for all nodes of exactly one macro tetrahedron. W.l.o.g. we choose the tetrahedral
 element with ID=0.
 
 In Fig.~\ref{fig:tet0Nodes} all interior nodes for constant and projected coordinates
@@ -101,11 +101,11 @@ points.
 
 We reduce the 3-dimensional space to 2D by the simple projection $(x,y,z) \mapsto (x,y)$.
 Note, that for each slice $S_k$ this is an bijective mapping, as 
-$z = z(x,y)\enspace\forall(x,y,z)\in S_k$ and as long as $S_k$ is not orhtogonal to the
+$z = z(x,y)\enspace\forall(x,y,z)\in S_k$ and as long as $S_k$ is not orthogonal to the
 z-axis. Now, the stencils can be visualized by using
 the mapped spatial coordinates and plotting $\si$ in z-direction. 
 In Fig.~\ref{fig:stencilCCvsVC} some $\si$ are illustrated for $S_{n_E}$. This is a
-random selection as all of the $\si$ exhibit a similiar shape. This also holds for other
+random selection as all of the $\si$ exhibit a similar shape. This also holds for other
 $S_k$.
 Naturally, as we consider here only constant coefficients, the particular stencil values 
 for constant coordinates are equal for all nodes of the tetrahedron. Whereas for projected
@@ -115,7 +115,7 @@ $\si$ can be fitted by a polynomial model. Due to the curvature, a linear fit is
 to be inaccurate, but quadratic polynomial may due it. So in the following we will 
 investigate this approach.
 Going to higher degrees may give additional accuracy, but will also increase the 
-implentation complexity and computational costs. Therefore we will stick to the 
+implantation complexity and computational costs. Therefore we will stick to the 
 quadratic approach.
 
 
@@ -172,20 +172,20 @@ edge midnodes, see Fig.~\ref{fig:samplePoints}
 \caption{Ten sample points (red) for quadratic interpolation of stencil values for 
 all interior nodes (blue) within on macro tetrahedron (black). For visualization,
 the constant coordinates have been used, but for the interpolation the projected
-will be utilised.}
+will be utilized.}
 \label{fig:samplePoints}
 \end{figure}  
 
 
 \begin{subsection}{HHG Implementation}
-In HHG this approach is realised by defining two new kernels 
+In HHG this approach is realized by defining two new kernels 
 \emph{tet\_gs\_coordsInterpolate.cc}
 and \emph{tet\_residual\_coordsInterpolate.cc} based on \emph{tet\_gs\_coords.cc} and 
 \emph{tet\_gs\_coords.cc}. As the stencil setup for gs and residual is the same, 
 the modifications are identic in both files.
 
 First, all $\si$ are computed for the ten sample points like in the original kernel. 
-Additionaly the (projected) x,y,z coordinates are used to build the $10\times10$ 
+Additionally the (projected) x,y,z coordinates are used to build the $10\times10$ 
 matrix $A$, with 
 $A_{j,:} = \left[x_j^2\quad y_j^2\quad z_j^2\quad x_jy_j\quad x_jz_j\quad y_jz_j\quad
 x_j\quad y_j\quad z_j\quad 1\right]$, $j = 1,...,10$.
@@ -254,7 +254,7 @@ blue for constant coordinates) for different slices.
 \begin{section}{Interpolation of local element matrices}
 \label{sec:interpolationLocElementMat}
 
-However, this approach cannot be utilised for variable coefficients, as non-smooth
+However, this approach cannot be utilized for variable coefficients, as non-smooth
 changes in the coefficients are not resolved by the interpolation. But there is a 
 workaround. Instead of interpolating the stencils, we can interpolate the local 
 element matrices and build the stencil by evaluating the interpolation polynomial
@@ -340,7 +340,7 @@ P^e_i(x,y,z) &= \sum_{j=1}^{n_i} p^e_{i,j}
  &= p_i^f(x,y,z) = P_i^f(x,y,z).
 \end{split}
 \end{align*}
-(1) addtion of $\Pi^2$ elements\\
+(1) addition of $\Pi^2$ elements\\
 (2) $\P_i$ is linear \\
 (3) basic vector addition\\
 And therefore, $P^f = P^s$.
@@ -414,7 +414,7 @@ Calculating the local element matrices involves function calls, which could be s
 
 For evaluation of these new approaches, let us begin with the spherepoisson driver, 
 and an initial input grid with 
-540 macro tetrahedra (i.e ntan=4, nrad=2). We run the testproblem for several
+540 macro tetrahedra (i.e ntan=4, nrad=2). We run the test problem for several
 maximal refinement levels (starting with 3 and going up to level 7) in parallel
 with 32 processors. In Fig.~\ref{fig:spherepoissonRES_3}-\ref{fig:spherepoissonERR_3}
 the residual, CPU time and discretisation error, respectively, are shown.
@@ -426,7 +426,7 @@ equivalent. But the difference gets obvious when we have a look at the CPU time,
 cf. Fig.~\ref{fig:spherepoissonCPU_3}. The runtime for stencil interpolation
 gets pretty close to the constant case, whereas for interpolated element matrices
 there is only some moderate speed up compared to projected coordinates.
-This behaviour represents also the theoretical operation counts in section 
+This behavior represents also the theoretical operation counts in section 
 \ref{sec:operationCounts}.
 For the discretisation error, we expect a reduction
 of factor 4 for each refinement. This holds for the constant and for the projected
@@ -507,7 +507,7 @@ element matrices (magenta) for parallel runs with
 {pics/spherepoisson_errorEuc_level7.eps} \\
 (c) max. level 6 & (d) max. level 7  
 \end{tabular}
-\caption{Discretization error in L2-Norm for 
+\caption{Discretisation error in L2-Norm for 
 spherepoisson driver
 \label{fig:spherepoissonERR_3}}
 \end{figure}  
@@ -521,7 +521,7 @@ spherepoisson driver
 \includegraphics[width=0.4\textwidth]%
 {pics/spherepoisson_errorEuc_InterpolationStencil.eps} 
 \end{tabular}
-\caption{Discretization error for projected coordinates (left)
+\caption{Discretisation error for projected coordinates (left)
 and interpolated stencils (right).
 \label{fig:spherepoissonERR_compare}}
 \end{figure}  
@@ -572,7 +572,7 @@ the coefficients are not set correctly. Otherwise the results deteriorate.
 
 
 For the Stokes problem, we observe, in contrast to the Poisson case,
-a very good match between the projected coordinates and interplation.
+a very good match between the projected coordinates and interpolation.
 
 One possible explanation:
 As we do Schur complement CG, the inverse of $A$ is only 
@@ -649,7 +649,7 @@ whereas for cyan and black also the $B$ part is interpolated.
 {pics/spherestokes_errorEuc_intP_level6.eps} \\
 (c) max. level 5 & (d) max. level 6  
 \end{tabular}
-\caption{Discretization error in L2-Norm for 
+\caption{Discretisation error in L2-Norm for 
 spherestokes driver.
 For green and magenta
 curve, only the $A$ part of the Stokes system is interpolated,
