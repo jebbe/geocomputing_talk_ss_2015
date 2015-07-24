@@ -450,12 +450,12 @@ and
 \begin{align}
 \begin{split}
 p_x    &= 2a_{200}x+a_{110}y + a_{101}z + a_{100},\qquad p_{xx} = 2a_{200}\\
-p_y    &= 2a_{020}y+a_{110}y + a_{011}z + a_{010},\qquad p_{yy} = 2a_{020}\\
-p_z    &= 2a_{002}z+a_{101}y + a_{011}z + a_{001},\qquad p_{zz} = 2a_{002}
+p_y    &= 2a_{020}y+a_{110}x + a_{011}z + a_{010},\qquad p_{yy} = 2a_{020}\\
+p_z    &= 2a_{002}z+a_{101}x + a_{011}y + a_{001},\qquad p_{zz} = 2a_{002}
 \end{split}
 \end{align}
 
-The algorithm is illustrated in 
+The algorithm is illustrated in Alg.~\ref{alg:polyincrement3D}
 
 
 \begin{algorithm}[H]
@@ -491,6 +491,7 @@ The algorithm is illustrated in
     }
  }   
  \caption{Evaluation of 3D quadratic polynomial by increments}
+ \label{alg:polyincrement3D}
 \end{algorithm}
 
 
