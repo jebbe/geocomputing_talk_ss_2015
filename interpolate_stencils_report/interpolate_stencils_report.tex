@@ -12,9 +12,7 @@
 \numberwithin{figure}{section}
 \numberwithin{table}{section}
 \usepackage{ifthen,thumbpdf}
-
-
-\numberwithin{figure}{section}
+\usepackage[]{algorithm2e}
 
 \def\si{SE_{value}^i}
 \def\RR{\mathbb{R}}
@@ -403,6 +401,111 @@ Calculating the local element matrices involves function calls, which could be s
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%              Polynomial increment                                                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+
+\begin{section}{Polynomial increment }
+\label{sec:polynomialIncrement }
+%
+As the naiive polynomial evalution is rather expensive, we will
+introduce a smarter way to do this.
+
+Lets start with the Taylor expansion of a quadratic polynomial $p(x+h)$ (in 1D) 
+at sample location $x$
+\begin{equation}
+p(x+h) = p(x) + p'(x)h + \frac{p''(x)}{2}h^2
+\end{equation}
+As it is quadratic, this representation is exact.
+It is
+\begin{equation}
+p'(x) = 2ax+b,\qquad p''(x) = 2a
+\end{equation}
+Further, we introduce 
+\begin{equation}
+\delta p  := p'(x)h + \frac{p''(x)}{2}h^2 = (2ax+b)h + ah^2
+\end{equation}
+Now, lets do the same for $p((x+h)+h)$:
+\begin{align}
+\begin{split}
+p(x+h+h) &= p(x+h) + p'(x+h)h + \frac{p''(x+h)}{2}h^2 \\
+  &= p(x+h) + (2a(x+h)+b)h + ah^2 \\
+  &= p(x+h) + \delta p + 2ah^2 \\
+  &= p(x+h) + \delta p +\delta k
+\end{split}
+\end{align}
+That is, we can evaluate the polynomial by simply
+adding the increment $\delta p$ to the previous 
+value and then updating $\delta p$ by $\delta k$ 
+which is constant. This approach transfers straight
+forward to 3D. Here we have
+
+\begin{equation}
+p(x,y,z) = a_{200}x^2 + a_{020}y^2 + a_{002}z^2 + a_{110}xy + a_{101}xz + a_{011}yz + 
+a_{100}x + a_{010}y + a_{001}z + a_{000}
+\end{equation}
+and
+\begin{align}
+\begin{split}
+p_x    &= 2a_{200}x+a_{110}y + a_{101}z + a_{100},\qquad p_{xx} = 2a_{200}\\
+p_y    &= 2a_{020}y+a_{110}y + a_{011}z + a_{010},\qquad p_{yy} = 2a_{020}\\
+p_z    &= 2a_{002}z+a_{101}y + a_{011}z + a_{001},\qquad p_{zz} = 2a_{002}
+\end{split}
+\end{align}
+
+The algorithm is illustrated in 
+
+
+\begin{algorithm}[H]
+ \KwData{$p(x,y,z)$ and its derivatives $p_x,p_{xx},p_y,p_{yy}, p_z,p_{zz}$ at location $(1,1,1)$\\
+ $\delta kx = 2a_{200}h_x^2,\quad\delta ky = 2a_{020}h_y^2,\quad\delta kx = 2a_{002}h_z^2$\\
+ $nX,nY,nZ$: number of sample points in $x,y,z$ direction}
+ $\delta p_x = p_x h_x + \frac{p_{xx}}{2} h_x^2$\;
+ $\delta p_y = p_y h_y + \frac{p_{yy}}{2} h_y^2$\;
+ $\delta p_z = p_z h_z + \frac{p_{zz}}{2} h_z^2$\;
+ \For{$K=1:nZ$}{
+  \If{$K > 1$}{
+   $p(K,1,1) = p(K-1,1,1)+\delta pz$\;
+   $\delta pz = \delta pz + \delta kz$\;
+   
+   $\delta py = \delta py(K,1,1)$\;
+   $\delta px = \delta px(K,1,1)$\;
+   }
+   
+   
+   \For{$J=1:nY$}{
+      \If{$J > 1$}{
+         $p(K,J,1) = p(K,J-1,1)+\delta py$\;
+         $\delta py = \delta py + \delta ky$\;
+   
+         $\delta px = \delta px(K,J,1)$\;
+      }
+      
+      
+      \For{$I=2:nX$}{
+         $p(K,J,I) = p(K,J,I-1)+\delta px$\;
+         $\delta px = \delta px + \delta kx$\;
+      }
+    }
+ }   
+ \caption{Evaluation of 3D quadratic polynomial by increments}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+\end{section}
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -514,6 +617,8 @@ spherepoisson driver
 
 
 
+
+
 \begin{figure}[H]\centering
 \begin{tabular}{@{}cc@{}}
 \includegraphics[width=0.4\textwidth]%
@@ -553,6 +658,130 @@ kernels.
 This was necessary (as we suppose) due to bug in the faces kernel where
 the coefficients are not set correctly. Otherwise the results deteriorate.
 \end{remark}
+
+
+
+
+
+% compare different approaches
+
+% \begin{figure}[H]\centering
+% \begin{tabular}{@{}cc@{}}
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_resEuc_2_level3.eps} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_resEuc_2_level4.eps} \\
+% (a) max. level 3 & (b) max. level 4  \\
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_resEuc_2_level5.eps} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_resEuc_2_level6.eps} \\
+% (c) max. level 5 & (d) max. level 6  
+% \end{tabular}
+% \end{figure}  
+% 
+% 
+% 
+% \begin{figure}[H]\centering
+% \begin{tabular}{@{}cc@{}}
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level3.eps} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level4.eps} \\
+% (a) max. level 3 & (b) max. level 4  \\
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level5.eps} &
+% \includegraphics[width=0.475\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level6.eps} \\
+% (c) max. level 5 & (d) max. level 6  
+% \end{tabular}
+% \end{figure}  
+
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_2_level3.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_2_level3.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_2_level4.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_2_level4.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_2_level5.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_2_level5.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_2_level6.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_2_level6.eps} 
+\end{tabular}
+\caption{Ntan=4, i.e. 540 macro tetrahedra}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_ntan2_level3.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_ntan2_level3.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_ntan2_level4.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_ntan2_level4.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_ntan2_level5.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_ntan2_level5.eps} \\
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_resEuc_ntan2_level6.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_errorEuc_ntan2_level6.eps} 
+\end{tabular}
+\caption{Ntan=2, i.e. 60 macro tetrahedra}
+\end{figure}  
+
+
+\begin{figure}[H]\centering
+\begin{tabular}{@{}cc@{}}
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_cpuTime_ntan2_level5.eps} &
+\includegraphics[width=0.49\textwidth]%
+{pics/spherepoisson_cpuTime_ntan2_level6.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level4.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level4.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level5.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level5.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level6.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_cpuTime_ntan2_level6.eps} 
+% \caption{Ntan=2, i.e. 60 macro tetrahedra}
+\end{tabular}
+\caption{Ntan=2, i.e. 60 macro tetrahedra}
+\end{figure}  
+
+
+%-----------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -757,8 +986,6 @@ curve, we do quadratic interpolation,
 and for cyan/black linear interpolation.
 \label{fig:spherestokesLinearERR_3}}
 \end{figure}  
-
-
 
 
 
