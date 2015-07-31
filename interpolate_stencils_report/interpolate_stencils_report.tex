@@ -28,6 +28,9 @@
 \begin{document}
 
 \maketitle
+\date
+\author{S.~Baumann, J.~Weismueller}
+
 
 \begin{abstract}
 In this report, we investigate the influence of projected coordinates on
@@ -401,6 +404,106 @@ Calculating the local element matrices involves function calls, which could be s
 
 
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             Precompute coefficients                                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+
+\begin{section}{Precompute coefficients}
+\label{sec:PrecomputeCoefficients}
+
+
+Some observations.
+The interpolation approach is faster but less acurate 
+than the approximation approach (with 35 sample points).
+The performance difference is due to the more costly
+computation of the polynomial coefficients.
+Furthermore, for both approaches the coefficients
+are computed on the fly in the kernel routine. 
+But these coefficients will not change within the entire
+simulation run (for constant viscosity).
+
+Therefore, why not precompute the coefficients for each 
+macro tetrahedron on each level.
+Then, both approaches have the same performance because
+both require the evaluation of a quadratic polynomial. And hopefully,
+there is a dramatic speedup as the costly setup phase has to be done
+only once.
+
+Lets start with some notations. We will denote $\phi_m(x,y,z)$, $m = 1,...,10$
+as the polynomial basis and the coefficients by $c_m$, i.e.
+$p(x,y,z) = \sum_{m=1}^{10}c_m\phi_m(x,y,z)$. 
+
+Let $A \in M\times 10$ be the matrix defined by $\phi_m$ at the
+$M$ sample points. For interpolation $M=10$ and for approximation
+$M=35$. The explict shape of $A$ depends ($\Psi$) on the choice of 
+$\phi_m$. Further, let $\mathbf{c_n} = (c^n_1,...,c^n_{10})^T \in 10\times 1$ 
+be the coefficient
+vector corresponding to stencil values $\mathbf{b_n} \in M \times 1$. Here,
+$n = 1,...,nOp\cdot14$, with operator size $nOp$ and 14 stencil entries.
+Note, the center stencil value will be computed by the sum rule.
+
+
+For the interpolation approach we solve  
+the system
+$A\mathbf{c_n}= \mathbf{b_n}$ and for approximation the
+least-squares problem 
+$\min\|\mathbf{b_n} - A\mathbf{c_n}\|$, 
+This has to be done $nOp\cdot14$ times for each macro tetrahedron. 
+Note, that $A = \Psi(\phi_m(x,y,z))$ changes for each macro tetrahedron.
+
+
+Now, we apply for each macro tetrahedron
+a mapping from the actual coordinates to the hhg indices, $(x,y,z) \rightarrow (i,j,k)$.
+As for a given level the indices of the sample points are equal for all macro tetrahedra,
+we now have to setup the matrix $A$ only once for this level. 
+
+This gives the following algorithm \ref{alg:setupCoeffs} 
+\newline
+\begin{algorithm}[H]
+ \KwData{$A_l \in M\times10$, $l=3(4),...,maxLevel$,
+    $B_l^{MT} = (\mathbf{b_{l,1}^{MT}},...,\mathbf{b_{l,p}^{MT}})^T$,\\
+    $C_l^{MT} = (\mathbf{c_{l,1}^{MT}},...,\mathbf{c_{l,p}^{MT}})^T$, 
+     $p = nOp\cdot14$, MT= macroTetrahedron, \\
+     index set $sKJI \in M\times3$ of sample points.}
+
+   \For{$l=3(4):maxLevel$}{  
+   define $sKJI$ (splitElement() for approx, corners/edgecenters for interpolation)\;   
+   $sKJI$ = sort($sKJI$)\;     
+   \For{$r = 1:M$}{
+      $A_l(r,:) = \Psi(\phi_1(sKJI(r)),...,\phi_{10}(sKJI(r)))$ \;
+      (Fill row $r$ of $A_l$ depending on polynomial basis)
+   }      
+   \For{$MT=1:\#macroTetrahedra$}{
+      compute stencils $B_l^{MT} \in M\times nOps\cdot14$ at $sKJI$\;
+      solve $A_l C_l^{MT} = B_l^{MT}$ or $\min\|B_l^{MT} - A_l C_l^{MT}\|$\;
+      store $\text{MT.C}_l^{MT}$      
+   }
+  }   
+ \caption{Precompute and store coefficients of quadratic polynomial}
+ \label{alg:setupCoeffs}
+\end{algorithm}
+
+In total, we have to store $10\cdot14\cdot nOps\cdot nLevels \approx 10^4$ doubles
+for each macro tetrahedron.
+
+
+
+
+
+\end{section}
+
+
+
+
+
+
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %              Polynomial increment                                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -512,6 +615,7 @@ The algorithm is illustrated in Alg.~\ref{alg:polyincrement3D}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %               Spherepoisson test                                                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
 \begin{section}{Spherepoisson test}
 
 
@@ -664,113 +768,66 @@ the coefficients are not set correctly. Otherwise the results deteriorate.
 
 
 
-% compare different approaches
-
+% % compare different approaches
+% 
 % \begin{figure}[H]\centering
 % \begin{tabular}{@{}cc@{}}
-% \includegraphics[width=0.475\textwidth]%
+% \includegraphics[width=0.49\textwidth]%
 % {pics/spherepoisson_resEuc_2_level3.eps} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_resEuc_2_level4.eps} \\
-% (a) max. level 3 & (b) max. level 4  \\
-% \includegraphics[width=0.475\textwidth]%
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level3.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_2_level4.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level4.eps} \\
+% \includegraphics[width=0.49\textwidth]%
 % {pics/spherepoisson_resEuc_2_level5.eps} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_resEuc_2_level6.eps} \\
-% (c) max. level 5 & (d) max. level 6  
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level5.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_2_level6.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_2_level6.eps} 
 % \end{tabular}
+% \caption{Ntan=4, i.e. 540 macro tetrahedra}
 % \end{figure}  
-% 
 % 
 % 
 % \begin{figure}[H]\centering
 % \begin{tabular}{@{}cc@{}}
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_errorEuc_2_level3.eps} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_errorEuc_2_level4.eps} \\
-% (a) max. level 3 & (b) max. level 4  \\
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_errorEuc_2_level5.eps} &
-% \includegraphics[width=0.475\textwidth]%
-% {pics/spherepoisson_errorEuc_2_level6.eps} \\
-% (c) max. level 5 & (d) max. level 6  
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_ntan2_level3.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_ntan2_level3.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_ntan2_level4.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_ntan2_level4.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_ntan2_level5.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_ntan2_level5.eps} \\
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_resEuc_ntan2_level6.eps} &
+% \includegraphics[width=0.49\textwidth]%
+% {pics/spherepoisson_errorEuc_ntan2_level6.eps} 
 % \end{tabular}
+% \caption{Ntan=2, i.e. 60 macro tetrahedra}
 % \end{figure}  
-
-
-
-\begin{figure}[H]\centering
-\begin{tabular}{@{}cc@{}}
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_2_level3.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_2_level3.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_2_level4.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_2_level4.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_2_level5.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_2_level5.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_2_level6.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_2_level6.eps} 
-\end{tabular}
-\caption{Ntan=4, i.e. 540 macro tetrahedra}
-\end{figure}  
-
-
-\begin{figure}[H]\centering
-\begin{tabular}{@{}cc@{}}
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_ntan2_level3.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_ntan2_level3.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_ntan2_level4.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_ntan2_level4.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_ntan2_level5.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_ntan2_level5.eps} \\
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_resEuc_ntan2_level6.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_errorEuc_ntan2_level6.eps} 
-\end{tabular}
-\caption{Ntan=2, i.e. 60 macro tetrahedra}
-\end{figure}  
-
-
-\begin{figure}[H]\centering
-\begin{tabular}{@{}cc@{}}
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_cpuTime_ntan2_level5.eps} &
-\includegraphics[width=0.49\textwidth]%
-{pics/spherepoisson_cpuTime_ntan2_level6.eps} \\
-% \includegraphics[width=0.49\textwidth]%
-% {pics/spherepoisson_cpuTime_ntan2_level4.eps} &
-% \includegraphics[width=0.49\textwidth]%
-% {pics/spherepoisson_cpuTime_ntan2_level4.eps} \\
+% 
+% 
+% \begin{figure}[H]\centering
+% \begin{tabular}{@{}cc@{}}
 % \includegraphics[width=0.49\textwidth]%
 % {pics/spherepoisson_cpuTime_ntan2_level5.eps} &
 % \includegraphics[width=0.49\textwidth]%
-% {pics/spherepoisson_cpuTime_ntan2_level5.eps} \\
-% \includegraphics[width=0.49\textwidth]%
-% {pics/spherepoisson_cpuTime_ntan2_level6.eps} &
-% \includegraphics[width=0.49\textwidth]%
-% {pics/spherepoisson_cpuTime_ntan2_level6.eps} 
+% {pics/spherepoisson_cpuTime_ntan2_level6.eps} \\
+% \end{tabular}
 % \caption{Ntan=2, i.e. 60 macro tetrahedra}
-\end{tabular}
-\caption{Ntan=2, i.e. 60 macro tetrahedra}
-\end{figure}  
-
-
-%-----------------------------------------
+% \end{figure}  
+% 
+% 
+% %-----------------------------------------
 
 
 
